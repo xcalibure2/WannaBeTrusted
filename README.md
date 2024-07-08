@@ -241,7 +241,7 @@ WannaBeTrusted is provided "as is" without any warranty of any kind. The author 
 # Powered by
 Luca Demers | LLB, MD | CRTO, OSCP, OSEP
 
-https://lucademers.com 
+https://lucademers.com/ 
 
 lucademers [at] protonmail [dot]com
 
