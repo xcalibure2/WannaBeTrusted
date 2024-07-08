@@ -1,28 +1,50 @@
+# Table of Contents
+
+1. [Introduction](#introduction)
+2. [Note](#note)
+3. [Justification for Additional Privileges](#justification-for-additional-privileges)
+    - [_SeTakeOwnershipPrivilege_](#setakeownershipprivilege)
+    - [_SeLoadDriverPrivilege_](#seloaddriverprivilege)
+    - [_SeBackupPrivilege_](#sebackupprivilege)
+    - [_SeRestorePrivilege_](#serestoreprivilege)
+4. [Capabilities and Impact](#capabilities-and-impact)
+5. [Proof of Concept](#proof-of-concept)
+    - [Step 1: Initial User Context](#step-1---initial-user-context)
+    - [Step 2: Running WannaBeTrusted](#step-2---running-wannabetrusted)
+    - [Step 3: Identifying TrustedInstaller Process](#step-3---identifying-trustedinstaller-process)
+    - [Step 4: Identifying Winlogon Processes](#step-4---identifying-winlogon-processes)
+    - [Step 5: Checking Enabled Privileges](#step-5---checking-enabled-privileges)
+    - [Step 6: Post-Escalation User Context](#step-6---post-escalation-user-context)
+6. [Detailed Workflow](#detailed-workflow)
+7. [Prerequisites](#prerequisites)
+8. [Usage](#usage)
+9. [Disclaimer](#disclaimer)
+
 # WannaBeTrusted
 
 WannaBeTrusted is a Windows utility engineered for leveraging privilege escalation by duplicating tokens from highly privileged processes to obtain SYSTEM and TrustedInstaller privileges.
 
-# Note
+## Note
 
 This code enables four privileges. However, users are free to customize this code for enabling other privileges by modifying the corresponding lines of the code. The list of privileges is accessible through [Microsoft Documentation](https://learn.microsoft.com/en-us/previous-versions/windows/it-pro/windows-10/security/threat-protection/security-policy-settings/user-rights-assignment).
 
-**Justification for Additional Privileges**
+### Justification for Additional Privileges
 
-- _SeTakeOwnershipPrivilege_: This privilege allows the user to take ownership of objects (files, folders, registry keys) on the system. Once ownership is taken, the user can modify the DACL to grant themselves full control. This is particularly useful for altering or deleting critical system files and settings to achieve privilege escalation or maintain persistence.
+- ###_SeTakeOwnershipPrivilege_: This privilege allows the user to take ownership of objects (files, folders, registry keys) on the system. Once ownership is taken, the user can modify the DACL to grant themselves full control. This is particularly useful for altering or deleting critical system files and settings to achieve privilege escalation or maintain persistence;
   
-- _SeLoadDriverPrivilege_: With this privilege, the user can load and unload device drivers using functions such as _NtLoadDriver_ and _NtUnloadDriver_. Malicious drivers operating at the kernel level can intercept and manipulate kernel-mode operations, allowing advanced persistence techniques and evasion of security controls.
+- ###_SeLoadDriverPrivilege_: With this privilege, the user can load and unload device drivers using functions such as _NtLoadDriver_ and _NtUnloadDriver_. Malicious drivers operating at the kernel level can intercept and manipulate kernel-mode operations, allowing advanced persistence techniques and evasion of security controls;
   
-- _SeBackupPrivilege_: This privilege allows the user to bypass file and directory permissions using backup APIs such as _BackupRead_ and _BackupWrite_. By accessing these APIs, a user can read and write files without adhering to the standard security checks, enabling the extraction of sensitive information such as password hashes from the SAM database or critical configuration files.
+-###_SeBackupPrivilege_: This privilege allows the user to bypass file and directory permissions using backup APIs such as _BackupRead_ and _BackupWrite_. By accessing these APIs, a user can read and write files without adhering to the standard security checks, enabling the extraction of sensitive information such as password hashes from the SAM database or critical configuration files;
   
-- _SeRestorePrivilege_: Similar to the backup privilege, this privilege allows the user to bypass file and directory permissions to restore system files. By using APIs like _RestoreFile_ and manipulating the VSS, a user can replace protected system files with malicious versions or restore previously backed-up files to maintain persistence.
+- ###_SeRestorePrivilege_: Similar to the backup privilege, this privilege allows the user to bypass file and directory permissions to restore system files. By using APIs like _RestoreFile_ and manipulating the VSS, a user can replace protected system files with malicious versions or restore previously backed-up files to maintain persistence;
   
 By enabling these privileges, testers can simulate advanced attack techniques. 
 
 # Capabilities and Impact
 
-- Impersonating SYSTEM and TrustedInstaller accounts grants an attacker unparalleled control over a Windows system. With SYSTEM privileges, the attacker can install and manipulate **kernel-mode drivers** (_SeLoadDriverPrivilege_), allowing the deployment of rootkits. A rootkit can operate with kernel-level access, providing an undetectable backdoor by intercepting and modifying system calls to conceal malicious activities from most security tools.
+- Impersonating SYSTEM and TrustedInstaller accounts grants an attacker unparalleled control over a Windows system. With SYSTEM privileges, the attacker can install and manipulate **kernel-mode drivers** (_SeLoadDriverPrivilege_), allowing the deployment of rootkits. A rootkit can operate with kernel-level access, providing an undetectable backdoor by intercepting and modifying system calls to conceal malicious activities from most security tools;
 
-- **Code injection** into highly privileged processes is another critical capability enabled by SYSTEM or TrustedInstaller privileges. Regular administrators are typically restricted from accessing the memory of processes running at higher privilege levels. By injecting code into processes like lsass.exe or winlogon.exe, an attacker can execute arbitrary code with elevated privileges, facilitating actions such as credential theft or further privilege escalation.
+- **Code injection** into highly privileged processes is another critical capability enabled by SYSTEM or TrustedInstaller privileges. Regular administrators are typically restricted from accessing the memory of processes running at higher privilege levels. By injecting code into processes like lsass.exe or winlogon.exe, an attacker can execute arbitrary code with elevated privileges, facilitating actions such as credential theft or further privilege escalation;
 
 - **Disabling or bypassing security solutions** is also significant. SYSTEM privileges allow an attacker to terminate or modify security processes that lower-privileged accounts cannot tamper with. For instance, an attacker could modify Windows Defender settings to exclude critical directories from scanning, or they could use SYSTEM privileges to stop security services entirely, rendering the system defenseless. Even with an EDR system in place, elevated privileges enable an attacker to tamper with or disable EDR components. SYSTEM or TrustedInstaller privileges allow actions like unloading EDR drivers, modifying EDR configurations, or unhooking and deleting EDR-related files, effectively blinding the EDR and preventing it from detecting or responding to malicious activities.
 
@@ -30,7 +52,7 @@ By enabling these privileges, testers can simulate advanced attack techniques.
 
 # Proof of Concept
 
-The following images demonstrate the functionality of WannaBeTrusted in a practical scenario. Each step is documented to provide a clear understanding of the processes involved and the results achieved:
+The following images demonstrate the functionality of WannaBeTrusted in a practical scenario. Each step is documented to provide a clear understanding of the processes involved and the results achieved.
 
 **Step 1 - Initial User Context**
 
@@ -153,8 +175,7 @@ if (!MyDuplicateToken(pid, &systemToken)) {
 
 **Explanation:**
 
-- This function duplicates the token of the specified process PID.
-  
+- This function duplicates the token of the specified process PID;
 - Using OpenProcess to get a handle to the target process;
 - _OpenProcessToken_ is then used to get a handle to the target process's token;
 - _DuplicateTokenEx_ is called to create a duplicate token with the necessary privileges.
