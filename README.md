@@ -20,7 +20,7 @@
 8. [Usage](#usage)
 9. [Disclaimer](#disclaimer)
 
-# WannaBeTrusted
+# Introduction
 
 WannaBeTrusted is a Windows utility engineered for leveraging privilege escalation by duplicating tokens from highly privileged processes to obtain SYSTEM and TrustedInstaller privileges.
 
@@ -28,19 +28,19 @@ WannaBeTrusted is a Windows utility engineered for leveraging privilege escalati
 
 This code enables four privileges. However, users are free to customize this code for enabling other privileges by modifying the corresponding lines of the code. The list of privileges is accessible through [Microsoft Documentation](https://learn.microsoft.com/en-us/previous-versions/windows/it-pro/windows-10/security/threat-protection/security-policy-settings/user-rights-assignment).
 
-### Justification for Additional Privileges
+## Justification for Additional Privileges
 
-- ###_SeTakeOwnershipPrivilege_: This privilege allows the user to take ownership of objects (files, folders, registry keys) on the system. Once ownership is taken, the user can modify the DACL to grant themselves full control. This is particularly useful for altering or deleting critical system files and settings to achieve privilege escalation or maintain persistence;
+- _SeTakeOwnershipPrivilege_: This privilege allows the user to take ownership of objects (files, folders, registry keys) on the system. Once ownership is taken, the user can modify the DACL to grant themselves full control. This is particularly useful for altering or deleting critical system files and settings to achieve privilege escalation or maintain persistence;
   
-- ###_SeLoadDriverPrivilege_: With this privilege, the user can load and unload device drivers using functions such as _NtLoadDriver_ and _NtUnloadDriver_. Malicious drivers operating at the kernel level can intercept and manipulate kernel-mode operations, allowing advanced persistence techniques and evasion of security controls;
+- _SeLoadDriverPrivilege_: With this privilege, the user can load and unload device drivers using functions such as _NtLoadDriver_ and _NtUnloadDriver_. Malicious drivers operating at the kernel level can intercept and manipulate kernel-mode operations, allowing advanced persistence techniques and evasion of security controls;
   
--###_SeBackupPrivilege_: This privilege allows the user to bypass file and directory permissions using backup APIs such as _BackupRead_ and _BackupWrite_. By accessing these APIs, a user can read and write files without adhering to the standard security checks, enabling the extraction of sensitive information such as password hashes from the SAM database or critical configuration files;
+- _SeBackupPrivilege_: This privilege allows the user to bypass file and directory permissions using backup APIs such as _BackupRead_ and _BackupWrite_. By accessing these APIs, a user can read and write files without adhering to the standard security checks, enabling the extraction of sensitive information such as password hashes from the SAM database or critical configuration files;
   
-- ###_SeRestorePrivilege_: Similar to the backup privilege, this privilege allows the user to bypass file and directory permissions to restore system files. By using APIs like _RestoreFile_ and manipulating the VSS, a user can replace protected system files with malicious versions or restore previously backed-up files to maintain persistence;
+- _SeRestorePrivilege_: Similar to the backup privilege, this privilege allows the user to bypass file and directory permissions to restore system files. By using APIs like _RestoreFile_ and manipulating the VSS, a user can replace protected system files with malicious versions or restore previously backed-up files to maintain persistence;
   
 By enabling these privileges, testers can simulate advanced attack techniques. 
 
-# Capabilities and Impact
+## Capabilities and Impact
 
 - Impersonating SYSTEM and TrustedInstaller accounts grants an attacker unparalleled control over a Windows system. With SYSTEM privileges, the attacker can install and manipulate **kernel-mode drivers** (_SeLoadDriverPrivilege_), allowing the deployment of rootkits. A rootkit can operate with kernel-level access, providing an undetectable backdoor by intercepting and modifying system calls to conceal malicious activities from most security tools;
 
@@ -50,7 +50,7 @@ By enabling these privileges, testers can simulate advanced attack techniques.
 
 **However, it is crucial to note that the practical success of these techniques may be constrained by modern EDR solutions. These solutions utilize advanced heuristics, behavioral analysis, and real-time monitoring of kernel-mode activities to detect and thwart unauthorized actions, thereby providing robust protection against such privilege escalation and deployment of rootkit attempts.**
 
-# Proof of Concept
+## Proof of Concept
 
 The following images demonstrate the functionality of WannaBeTrusted in a practical scenario. Each step is documented to provide a clear understanding of the processes involved and the results achieved.
 
@@ -65,7 +65,7 @@ The initial user context is shown with the _whoami /all_ command, displaying the
   <p><em><strong>Figure 1 </strong> - Initial user context showing current privileges and group memberships</em></p>
 </div>
 
-**Step 2 - Running WannaBeTrusted**
+### **Step 2 - Running WannaBeTrusted**
 
 The execution of the WannaBeTrusted tool is shown, detailing the steps taken to impersonate the _winlogon.exe_ process and subsequently the TrustedInstaller process. The tool successfully duplicates the tokens and enables necessary privileges, culminating in the creation of a process running with TrustedInstaller and SYSTEM privileges:
 
@@ -76,7 +76,7 @@ The execution of the WannaBeTrusted tool is shown, detailing the steps taken to 
   <p><em><strong>Figure 2</strong> - Steps to impersonate highly privileged processes</em></p>
 </div>
 
-**Step 3 - Identifying TrustedInstaller Process**
+### **Step 3 - Identifying TrustedInstaller Process**
 
 Using Process Hacker, the TrustedInstaller.exe process is identified with **PID 7056**. This process, running with high privileges, is a target for token duplication to obtain TrustedInstaller privileges. This step is essential to confirm that the TrustedInstaller service is active and its process can be leveraged:
 
@@ -87,7 +87,7 @@ Using Process Hacker, the TrustedInstaller.exe process is identified with **PID 
   <p><em><strong>Figure 3</strong> - TrustedInstaller process with PID 7056</em></p>
 </div>
 
-**Step 4 - Identifying Winlogon Processes**
+### **Step 4 - Identifying Winlogon Processes**
 
 The winlogon.exe processes are identified, with **PIDs 580** and 3540. These processes run with SYSTEM privileges and are critical targets for the initial privilege escalation step. The ability to duplicate tokens from these processes is the key to gaining SYSTEM-level access, which is a prerequisite for obtaining TrustedInstaller privileges:
 
@@ -98,7 +98,7 @@ The winlogon.exe processes are identified, with **PIDs 580** and 3540. These pro
   <p><em><strong>Figure 4</strong> - Winlogon processes with PIDs 580 and 3540</em></p>
 </div>
 
-**Step 5 - Checking Enabled Privileges**
+### **Step 5 - Checking Enabled Privileges**
 
 Using the whoami /priv command, the current privileges of the user are displayed. Important privileges such as _SeTakeOwnershipPrivilege_, _SeLoadDriverPrivilege_, _SeBackupPrivilege_, and _SeRestorePrivilege_ are highlighted as enabled. These privileges are crucial for the subsequent steps in the privilege escalation process. To modify the code to change the enabled privileges, adjust the AdjustTokenPrivileges function call to include the desired privileges, allowing the user to enable other privileges as needed. Refer to lines 33 to 38 in the code for modification.
 
@@ -109,7 +109,7 @@ Using the whoami /priv command, the current privileges of the user are displayed
   <p><em><strong>Figure 5 </strong> - Current user privileges </em></p>
 </div>
 
-**Step 6 - Post-Escalation User Context**
+### **Step 6 - Post-Escalation User Context**
 
 The user context post-escalation is shown with the whoami /all command. The user is now operating under the nt authority\system account with the highest level of privileges available on the system, including membership in the 'TrustedInstaller' group. This confirms the successful execution of the WannaBeTrusted tool and the elevation to SYSTEM and TrustedInstaller privileges:
 
@@ -120,7 +120,7 @@ The user context post-escalation is shown with the whoami /all command. The user
   <p><em><strong>Figure 6 </strong> - Post-escalation user context</em></p>
 </div>
 
-# Detailed Workflow
+## Detailed Workflow
 
 **1) Check if the program is running as an administrator:**
 
@@ -237,7 +237,7 @@ CloseHandle(trustedInstallerToken);
 
 - This step involves using the _CreateProcessWithTokenW_ function to start a new process with elevated privileges.
 
-# Prerequisites
+## Prerequisites
 
 - **Administrator Privileges:** Required to execute most operations within the tool;
 - **C/C++ Compiler:**.
@@ -257,10 +257,10 @@ x86_64-w64-mingw32-gcc -o WannaBeTrusted.exe -lpsapi -ladvapi32 -luserenv WannaB
 
 - Run the executable with administrative privileges.
 
-# Disclaimer
+## Disclaimer
 WannaBeTrusted is provided "as is" without any warranty of any kind. The author is not responsible for any damage or legal issues caused by the use of this tool.
 
-# Powered by
+## Powered by
 Luca Demers | LLB, MD | CRTO, OSCP, OSEP
 
 https://lucademers.com 
