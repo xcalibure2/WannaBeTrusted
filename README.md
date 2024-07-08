@@ -232,7 +232,7 @@ CloseHandle(trustedInstallerToken);
 - **Administrator Privileges:** Required to execute most operations within the tool;
 - **C/C++ Compiler:**.
 
-- # Usage
+## Usage
 
 **1) Compile the Program:**
 
