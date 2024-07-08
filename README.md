@@ -2,19 +2,9 @@
 
 1. [Introduction](#introduction)
 2. [Note](#note)
-3. [Justification for Additional Privileges](#justification-for-additional-privileges)
-    - [_SeTakeOwnershipPrivilege_](#setakeownershipprivilege)
-    - [_SeLoadDriverPrivilege_](#seloaddriverprivilege)
-    - [_SeBackupPrivilege_](#sebackupprivilege)
-    - [_SeRestorePrivilege_](#serestoreprivilege)
+3. [Additional Privileges](#justification-for-additional-privileges)
 4. [Capabilities and Impact](#capabilities-and-impact)
 5. [Proof of Concept](#proof-of-concept)
-    - [Step 1: Initial User Context](#step-1---initial-user-context)
-    - [Step 2: Running WannaBeTrusted](#step-2---running-wannabetrusted)
-    - [Step 3: Identifying TrustedInstaller Process](#step-3---identifying-trustedinstaller-process)
-    - [Step 4: Identifying Winlogon Processes](#step-4---identifying-winlogon-processes)
-    - [Step 5: Checking Enabled Privileges](#step-5---checking-enabled-privileges)
-    - [Step 6: Post-Escalation User Context](#step-6---post-escalation-user-context)
 6. [Detailed Workflow](#detailed-workflow)
 7. [Prerequisites](#prerequisites)
 8. [Usage](#usage)
@@ -28,7 +18,7 @@ WannaBeTrusted is a Windows utility engineered for leveraging privilege escalati
 
 This code enables four privileges. However, users are free to customize this code for enabling other privileges by modifying the corresponding lines of the code. The list of privileges is accessible through [Microsoft Documentation](https://learn.microsoft.com/en-us/previous-versions/windows/it-pro/windows-10/security/threat-protection/security-policy-settings/user-rights-assignment).
 
-## Justification for Additional Privileges
+### Additional Privileges
 
 - _SeTakeOwnershipPrivilege_: This privilege allows the user to take ownership of objects (files, folders, registry keys) on the system. Once ownership is taken, the user can modify the DACL to grant themselves full control. This is particularly useful for altering or deleting critical system files and settings to achieve privilege escalation or maintain persistence;
   
@@ -264,5 +254,7 @@ WannaBeTrusted is provided "as is" without any warranty of any kind. The author 
 Luca Demers | LLB, MD | CRTO, OSCP, OSEP
 
 https://lucademers.com 
+
 lucademers [at] protonmail [dot]com
+
 https://www.linkedin.com/in/lucademers/
